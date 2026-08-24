@@ -5,7 +5,12 @@
   "scripts": {
     "dev:backend": "npm run start:dev -w backend",
     "dev:frontend": "npm run dev -w frontend",
+    "dev": "npm run dev:backend & npm run dev:frontend",
     "build": "npm run build -w backend && npm run build -w frontend",
-    "test": "npm run test -w backend"
+    "test": "npm run test -w backend",
+    "prisma:generate": "npm run prisma:generate -w backend",
+    "prisma:migrate": "npm run prisma:migrate -w backend",
+    "prisma:studio": "npx prisma studio --schema=backend/prisma/schema.prisma",
+    "setup": "npm install && npm run prisma:generate && npm run prisma:migrate"
   }
 }

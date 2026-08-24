@@ -2,6 +2,8 @@
 
 Base modular para aplicaciones enterprise multi-tenant con NestJS, Next.js App Router, PostgreSQL y Prisma. Soporta múltiples tipos de negocio (boticas, ferreterías, bodegas, restaurantes, peluquerías, gimnasios) con sistema de suscripciones y membresías.
 
+> **Nota**: Este proyecto está configurado para ejecutarse localmente sin Docker. Asegúrate de tener PostgreSQL instalado en tu máquina.
+
 ## Estructura de carpetas
 
 ```text
@@ -86,30 +88,86 @@ PymeN/
 
 ## Inicio rápido
 
-1. Copia variables de entorno:
-   - `cp backend/.env.example backend/.env`
-   - `cp frontend/.env.example frontend/.env.local`
+### Prerrequisitos
 
-2. Instala dependencias: `npm install`
+- **Node.js** >= 18.x (recomendado v20)
+- **npm** >= 9.x
+- **PostgreSQL** >= 14.x instalado localmente
 
-3. Genera Prisma Client: `npm run prisma:generate -w backend`
+### Pasos para ejecutar localmente
 
-4. Ejecuta migraciones: `npm run prisma:migrate -w backend`
+1. **Instalar PostgreSQL** (si no lo tienes):
+   - **Ubuntu/Debian**: `sudo apt-get install postgresql postgresql-contrib`
+   - **macOS**: `brew install postgresql` o descargar desde https://postgresapp.com/
+   - **Windows**: Descargar desde https://www.postgresql.org/download/windows/
 
-5. Levanta backend: `npm run dev:backend`
+2. **Crear la base de datos**:
+   ```bash
+   # Acceder a PostgreSQL
+   sudo -u postgres psql
+   
+   # Crear usuario y base de datos (en la consola de PostgreSQL)
+   CREATE USER postgres WITH PASSWORD 'postgres' SUPERUSER;
+   CREATE DATABASE pymen_dev;
+   \q
+   ```
 
-6. Levanta frontend: `npm run dev:frontend`
+3. **Copiar variables de entorno**:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env.local
+   ```
+   
+   > **Importante**: Edita `backend/.env` y ajusta `DATABASE_URL` si tu PostgreSQL tiene credenciales diferentes.
+
+4. **Instalar dependencias**:
+   ```bash
+   npm install
+   ```
+
+5. **Generar Prisma Client**:
+   ```bash
+   npm run prisma:generate
+   ```
+
+6. **Ejecutar migraciones** (crea las tablas en la base de datos):
+   ```bash
+   npm run prisma:migrate
+   ```
+
+7. **Ejecutar el proyecto**:
+   
+   **Opción A - Ejecutar todo junto** (backend y frontend simultáneamente):
+   ```bash
+   npm run dev
+   ```
+   
+   **Opción B - Ejecutar por separado** (en terminales diferentes):
+   ```bash
+   # Terminal 1 - Backend
+   npm run dev:backend
+   
+   # Terminal 2 - Frontend
+   npm run dev:frontend
+   ```
+
+8. **Acceder a la aplicación**:
+   - **Frontend**: http://localhost:3000
+   - **Backend API**: http://localhost:3001
+   - **Prisma Studio** (opcional, para ver la BD): `npm run prisma:studio`
 
 ## Scripts disponibles
 
 | Comando | Descripción |
 |---------|-------------|
-| `npm install` | Instala dependencias de todos los workspaces |
-| `npm run prisma:generate -w backend` | Genera Prisma Client |
-| `npm run prisma:migrate -w backend` | Ejecuta migraciones en desarrollo |
-| `npm run dev:backend` | Inicia backend en modo desarrollo |
-| `npm run dev:frontend` | Inicia frontend en modo desarrollo |
-| `npm run build` | Construye backend y frontend |
+| `npm install` o `npm run setup` | Instala dependencias de todos los workspaces |
+| `npm run prisma:generate` | Genera Prisma Client |
+| `npm run prisma:migrate` | Ejecuta migraciones en desarrollo |
+| `npm run prisma:studio` | Abre Prisma Studio para visualizar la base de datos |
+| `npm run dev:backend` | Inicia backend en modo desarrollo (puerto 3001) |
+| `npm run dev:frontend` | Inicia frontend en modo desarrollo (puerto 3000) |
+| `npm run dev` | Inicia backend y frontend simultáneamente |
+| `npm run build` | Construye backend y frontend para producción |
 | `npm run test -w backend` | Ejecuta tests del backend |
 | `npm run lint -w backend` | Ejecuta linter en backend |
 | `npm run lint -w frontend` | Ejecuta linter en frontend |
