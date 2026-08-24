@@ -76,6 +76,17 @@ export class SubscriptionsRepository {
     });
   }
 
+  async findAll(): Promise<Subscription[]> {
+    return this.prisma.subscription.findMany({
+      include: { tenant: true, payments: { orderBy: { createdAt: 'desc' }, take: 5 } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async remove(id: string): Promise<Subscription> {
+    return this.prisma.subscription.delete({ where: { id } });
+  }
+
   async update(id: string, data: UpdateSubscriptionDto): Promise<Subscription> {
     return this.prisma.subscription.update({
       where: { id },

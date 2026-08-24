@@ -77,7 +77,7 @@ export class PlansController {
   subscribeToPlan(
     @Param('id') id: string,
     @Body() body: { tenantId: string },
-    @Request() req,
+    @Request() req: any,
   ) {
     // Verificar que el usuario tiene acceso al tenant
     return this.plansService.subscribeToPlan(body.tenantId, id);

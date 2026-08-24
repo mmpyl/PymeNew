@@ -5,6 +5,7 @@ import {
   Body,
   Patch,
   Param,
+  Delete,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -20,6 +21,22 @@ export class SubscriptionsController {
   constructor(
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
+
+  @Get()
+  findAll() { return this.subscriptionsService.findAll(); }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) { return this.subscriptionsService.findOne(id); }
+
+  @Patch(':id')
+  @Roles(Role.ADMIN)
+  update(@Param('id') id: string, @Body() body: any) {
+    return this.subscriptionsService.update(id, body);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  remove(@Param('id') id: string) { return this.subscriptionsService.remove(id); }
 
   @Post(':tenantId')
   @Roles(Role.ADMIN, Role.TENANT_ADMIN)
@@ -66,7 +83,7 @@ export class SubscriptionsController {
 
   @Get('expiring')
   @Roles(Role.ADMIN)
-  getExpiring(@Request() req) {
+  getExpiring(@Request() req: any) {
     const days = req.query.days ? parseInt(req.query.days as string, 10) : 7;
     return this.subscriptionsService.getExpiringSubscriptions(days);
   }

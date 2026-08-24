@@ -67,7 +67,7 @@ export class PlansService {
     return allPlans.sort((a, b) => {
       if (a.isPopular && !b.isPopular) return -1;
       if (!a.isPopular && b.isPopular) return 1;
-      return a.sortOrder - b.sortOrder || a.price - b.price;
+      return a.sortOrder - b.sortOrder || Number(a.price) - Number(b.price);
     });
   }
 
@@ -78,7 +78,7 @@ export class PlansService {
       tenantId,
       planName: plan.name,
       billingCycle: plan.billingCycle,
-      price: plan.price,
+      price: Number(plan.price),
       currency: plan.currency,
       trialDays: plan.trialDays,
       maxUsers: plan.maxUsers,

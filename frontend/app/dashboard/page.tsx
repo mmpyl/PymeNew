@@ -1,245 +1,92 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiFetch } from '@/lib/api';
 
-interface StatCardProps {
-  title: string;
-  value: string;
-  change: string;
-  isPositive: boolean;
-  icon: React.ReactNode;
+type Resource = 'users' | 'tenants' | 'plans' | 'subscriptions';
+type RecordData = Record<string, any>;
+const resources = [
+  { key: 'users' as Resource, label: 'Usuarios', singular: 'usuario' },
+  { key: 'tenants' as Resource, label: 'Tenants', singular: 'tenant' },
+  { key: 'plans' as Resource, label: 'Planes', singular: 'plan' },
+  { key: 'subscriptions' as Resource, label: 'Suscripciones', singular: 'suscripción' },
+];
+const emptyForms: Record<Resource, RecordData> = {
+  users: { email: '', password: '', roles: ['USER'] },
+  tenants: { name: '', slug: '', description: '', moduleType: 'CUSTOM', status: 'TRIAL', email: '', phone: '' },
+  plans: { name: '', description: '', billingCycle: 'MONTHLY', price: 0, currency: 'USD', trialDays: 15, maxUsers: 5, maxStorage: 1000, features: [] },
+  subscriptions: { tenantId: '', planName: '', billingCycle: 'MONTHLY', price: 0, currency: 'USD', endDate: '' },
+};
+function displayValue(value: any) {
+  if (value === null || value === undefined || value === '') return 'Sin datos';
+  if (typeof value === 'object') return value.email || value.name || JSON.stringify(value);
+  return String(value);
 }
-
-function StatCard({ title, value, change, isPositive, icon }: StatCardProps) {
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-          {icon}
-        </div>
-        <span className={`text-sm font-semibold px-3 py-1 rounded-full ${isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {change}
-        </span>
-      </div>
-      <h3 className="text-slate-600 text-sm font-medium mb-1">{title}</h3>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-    </div>
-  );
+function columnsFor(resource: Resource) {
+  return {
+    users: [['email', 'Correo'], ['roles', 'Roles'], ['createdAt', 'Registro']],
+    tenants: [['name', 'Nombre'], ['slug', 'Slug'], ['status', 'Estado'], ['moduleType', 'Módulo']],
+    plans: [['name', 'Nombre'], ['billingCycle', 'Ciclo'], ['price', 'Precio'], ['isActive', 'Estado']],
+    subscriptions: [['tenant', 'Tenant'], ['planName', 'Plan'], ['status', 'Estado'], ['endDate', 'Vence']],
+  }[resource] as string[][];
 }
-
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
-
-  useEffect(() => {
-    setCurrentTime(new Date());
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        {/* Header */}
-        <header className="bg-white border-b border-slate-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                  PymeN Dashboard
-                </h1>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="hidden sm:flex items-center gap-2 text-sm text-slate-600">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {currentTime ? currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                </div>
-                
-                <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                    {user?.email.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="hidden sm:block text-sm font-medium text-slate-700 max-w-[150px] truncate">
-                    {user?.email}
-                  </span>
-                  <button
-                    onClick={logout}
-                    className="ml-2 p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                    title="Cerrar sesión"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">
-              Bienvenido al Dashboard
-            </h2>
-            <p className="text-slate-600">
-              Panel de control y gestión de tu aplicación enterprise.
-            </p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard
-              title="Usuarios Totales"
-              value="1,234"
-              change="+12.5%"
-              isPositive={true}
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              }
-            />
-            <StatCard
-              title="Ingresos Mensuales"
-              value="$12,450"
-              change="+8.2%"
-              isPositive={true}
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
-            />
-            <StatCard
-              title="Pedidos Activos"
-              value="45"
-              change="-3.1%"
-              isPositive={false}
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-              }
-            />
-            <StatCard
-              title="Tasa de Conversión"
-              value="3.24%"
-              change="+2.4%"
-              isPositive={true}
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              }
-            />
-          </div>
-
-          {/* Recent Activity & Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Recent Activity */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-slate-900">Actividad Reciente</h3>
-                <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  Ver todo
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                {[1, 2, 3, 4].map((item) => (
-                  <div key={item} className="flex items-start gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        Nuevo usuario registrado
-                      </p>
-                      <p className="text-sm text-slate-600 truncate">
-                        usuario{item}@ejemplo.com se unió a la plataforma
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Hace {item * 15} minutos
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">Acciones Rápidas</h3>
-              
-              <div className="space-y-3">
-                <button className="w-full flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors group">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-semibold text-slate-900">Nuevo Usuario</p>
-                    <p className="text-xs text-slate-600">Crear cuenta manual</p>
-                  </div>
-                </button>
-
-                <button className="w-full flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors group">
-                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-semibold text-slate-900">Generar Reporte</p>
-                    <p className="text-xs text-slate-600">Exportar datos</p>
-                  </div>
-                </button>
-
-                <button className="w-full flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors group">
-                  <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-semibold text-slate-900">Configuración</p>
-                    <p className="text-xs text-slate-600">Ajustes del sistema</p>
-                  </div>
-                </button>
-              </div>
-
-              {/* User Info Card */}
-              <div className="mt-6 pt-6 border-t border-slate-200">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
-                  <p className="text-sm opacity-90 mb-1">Usuario autenticado:</p>
-                  <p className="font-semibold truncate">{user?.email}</p>
-                  <div className="mt-3 flex items-center gap-2 text-xs opacity-80">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    Sesión activa
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    </ProtectedRoute>
-  );
+  const { user, token, logout } = useAuth();
+  const [resource, setResource] = useState<Resource>('users');
+  const [items, setItems] = useState<RecordData[]>([]);
+  const [editing, setEditing] = useState<RecordData | null>(null);
+  const [form, setForm] = useState<RecordData>(emptyForms.users);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const loadItems = async (selected: Resource = resource) => {
+    if (!token) return;
+    setLoading(true); setError('');
+    try {
+      const data = await apiFetch<RecordData[]>(`/${selected}`, { token });
+      setItems(Array.isArray(data) ? data : []);
+    } catch (err) { setError(err instanceof Error ? err.message : 'No se pudo cargar la información'); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { loadItems(); }, [resource, token]);
+  const selectResource = (next: Resource) => { setResource(next); setEditing(null); setForm(emptyForms[next]); setNotice(''); };
+  const openCreate = () => { setEditing({}); setForm({ ...emptyForms[resource] }); };
+  const openEdit = (item: RecordData) => { setEditing(item); setForm({ ...item, password: '' }); };
+  const save = async (event: FormEvent) => {
+    event.preventDefault(); setError('');
+    const payload = { ...form };
+    if (resource === 'users' && !payload.password) delete payload.password;
+    if (resource === 'subscriptions' && payload.endDate) payload.endDate = new Date(payload.endDate).toISOString();
+    try {
+      await apiFetch(editing?.id ? `/${resource}/${editing.id}` : `/${resource}`, { method: editing?.id ? 'PATCH' : 'POST', body: JSON.stringify(payload), token: token ?? undefined });
+      setEditing(null); setNotice(`${resources.find((entry) => entry.key === resource)?.singular} guardado correctamente`); await loadItems();
+    } catch (err) { setError(err instanceof Error ? err.message : 'No se pudo guardar'); }
+  };
+  const remove = async (item: RecordData) => {
+    if (!item.id || !window.confirm('¿Confirmas eliminar este registro?')) return;
+    try { await apiFetch(`/${resource}/${item.id}`, { method: 'DELETE', token: token ?? undefined }); setNotice('Registro eliminado'); await loadItems(); }
+    catch (err) { setError(err instanceof Error ? err.message : 'No se pudo eliminar'); }
+  };
+  return <ProtectedRoute><div className="min-h-screen bg-[#f4f7fb] text-slate-900 md:flex">
+    <aside className="w-full border-b border-slate-200 bg-[#102a43] text-white md:min-h-screen md:w-64 md:border-b-0 md:border-r md:border-slate-800">
+      <div className="flex items-center justify-between px-6 py-6 md:block"><div className="text-2xl font-black tracking-tight">Pyme<span className="text-[#f4b942]">N</span></div><div className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-300">Centro de gestión</div></div>
+      <nav className="flex gap-2 overflow-x-auto px-4 pb-4 md:block md:px-3">{resources.map((entry) => <button key={entry.key} onClick={() => selectResource(entry.key)} className={`flex min-w-max items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold transition ${resource === entry.key ? 'bg-[#f4b942] text-[#102a43]' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}><span className="w-5 text-center">{entry.key === 'users' ? '◉' : entry.key === 'tenants' ? '⌂' : entry.key === 'plans' ? '◆' : '↻'}</span>{entry.label}</button>)}</nav>
+      <div className="hidden border-t border-white/10 px-6 py-5 md:block"><div className="mb-3 text-xs text-slate-400">Sesión activa</div><div className="truncate text-sm font-semibold">{user?.email}</div><button onClick={logout} className="mt-4 text-sm text-[#f4b942] hover:text-white">Cerrar sesión</button></div>
+    </aside>
+    <main className="min-w-0 flex-1 p-4 sm:p-8"><header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#187c8c]">Operaciones</p><h1 className="text-3xl font-black tracking-tight">{resources.find((entry) => entry.key === resource)?.label}</h1><p className="mt-1 text-sm text-slate-500">Administra registros y relaciones de tu plataforma.</p></div><button onClick={openCreate} className="rounded-lg bg-[#187c8c] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#126571]">+ Nuevo {resources.find((entry) => entry.key === resource)?.singular}</button></header>
+      {notice && <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</div>}{error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><span className="text-sm font-bold text-slate-700">{items.length} registros</span><button onClick={() => loadItems()} className="text-sm font-semibold text-[#187c8c]">Actualizar</button></div><div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>{columnsFor(resource).map((column) => <th key={column[0]} className="px-5 py-4 font-bold">{column[1]}</th>)}<th className="px-5 py-4 text-right">Acciones</th></tr></thead><tbody className="divide-y divide-slate-100">{loading ? <tr><td colSpan={columnsFor(resource).length + 1} className="px-5 py-12 text-center text-slate-500">Cargando...</td></tr> : items.length === 0 ? <tr><td colSpan={columnsFor(resource).length + 1} className="px-5 py-12 text-center text-slate-500">No hay registros todavía.</td></tr> : items.map((item) => <tr key={item.id} className="hover:bg-slate-50">{columnsFor(resource).map(([key]) => <td key={key} className="max-w-[240px] truncate px-5 py-4 font-medium text-slate-700">{key === 'createdAt' || key === 'endDate' ? (item[key] ? new Date(item[key]).toLocaleDateString('es-ES') : 'Sin fecha') : key === 'isActive' ? (item[key] ? 'Activo' : 'Inactivo') : displayValue(item[key])}</td>)}<td className="px-5 py-4 text-right"><button onClick={() => openEdit(item)} className="mr-3 font-semibold text-[#187c8c]">Editar</button><button onClick={() => remove(item)} className="font-semibold text-red-600">Eliminar</button></td></tr>)}</tbody></table></div></section>
+    </main>
+    {editing && <div className="fixed inset-0 z-10 flex items-center justify-center bg-[#102a43]/50 p-4"><form onSubmit={save} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl bg-white p-6 shadow-2xl"><div className="mb-6 flex items-center justify-between"><h2 className="text-xl font-black">{editing.id ? 'Editar' : 'Nuevo'} {resources.find((entry) => entry.key === resource)?.singular}</h2><button type="button" onClick={() => setEditing(null)} className="text-2xl text-slate-400">×</button></div><FormFields resource={resource} form={form} setForm={setForm} /><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setEditing(null)} className="rounded-lg px-4 py-2 text-sm font-bold text-slate-600">Cancelar</button><button className="rounded-lg bg-[#187c8c] px-5 py-2 text-sm font-bold text-white">Guardar</button></div></form></div>}
+  </div></ProtectedRoute>;
+}
+function FormFields({ resource, form, setForm }: { resource: Resource; form: RecordData; setForm: (value: RecordData) => void }) {
+  const update = (key: string, value: any) => setForm({ ...form, [key]: value });
+  const field = (key: string, label: string, type = 'text') => <label className="block"><span className="mb-1 block text-sm font-semibold text-slate-700">{label}</span><input required={['email', 'name', 'slug', 'planName'].includes(key)} type={type} value={form[key] ?? ''} onChange={(event) => update(key, type === 'number' ? Number(event.target.value) : event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-[#187c8c]" /></label>;
+  if (resource === 'users') return <div className="grid gap-4">{field('email', 'Correo', 'email')}{field('password', 'Contraseña', 'password')}<label className="block"><span className="mb-1 block text-sm font-semibold text-slate-700">Rol</span><select value={form.roles?.[0] ?? 'USER'} onChange={(event) => update('roles', [event.target.value])} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option>USER</option><option>ADMIN</option><option>TENANT_ADMIN</option><option>TENANT_USER</option></select></label></div>;
+  if (resource === 'tenants') return <div className="grid gap-4 sm:grid-cols-2">{field('name', 'Nombre')}{field('slug', 'Slug')}{field('email', 'Correo', 'email')}{field('phone', 'Teléfono')}<label className="block"><span className="mb-1 block text-sm font-semibold text-slate-700">Estado</span><select value={form.status} onChange={(event) => update('status', event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option>TRIAL</option><option>ACTIVE</option><option>SUSPENDED</option><option>EXPIRED</option></select></label><label className="block"><span className="mb-1 block text-sm font-semibold text-slate-700">Módulo</span><select value={form.moduleType} onChange={(event) => update('moduleType', event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option>CUSTOM</option><option>BOTICA</option><option>FERRETERIA</option><option>BODEGA</option><option>RESTAURANTE</option><option>PELUQUERIA</option><option>GIMNASIO</option></select></label>{field('description', 'Descripción')}</div>;
+  if (resource === 'plans') return <div className="grid gap-4 sm:grid-cols-2">{field('name', 'Nombre')}{field('price', 'Precio', 'number')}{field('trialDays', 'Días de prueba', 'number')}{field('maxUsers', 'Máximo de usuarios', 'number')}{field('maxStorage', 'Almacenamiento (MB)', 'number')}<label className="block"><span className="mb-1 block text-sm font-semibold text-slate-700">Ciclo de facturación</span><select value={form.billingCycle} onChange={(event) => update('billingCycle', event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option>MONTHLY</option><option>QUARTERLY</option><option>YEARLY</option><option>LIFETIME</option></select></label>{field('description', 'Descripción')}</div>;
+  return <div className="grid gap-4 sm:grid-cols-2">{field('tenantId', 'ID del tenant')}{field('planName', 'Nombre del plan')}{field('price', 'Precio', 'number')}{field('endDate', 'Fecha de vencimiento', 'date')}<label className="block"><span className="mb-1 block text-sm font-semibold text-slate-700">Ciclo</span><select value={form.billingCycle} onChange={(event) => update('billingCycle', event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option>MONTHLY</option><option>QUARTERLY</option><option>YEARLY</option><option>LIFETIME</option></select></label></div>;
 }

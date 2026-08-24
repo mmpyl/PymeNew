@@ -17,4 +17,19 @@ export class UsersRepository {
   findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
   }
+
+  findAll(): Promise<User[]> {
+    return this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { tenantMemberships: true, ownedTenants: true } } },
+    });
+  }
+
+  update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
+    return this.prisma.user.update({ where: { id }, data });
+  }
+
+  remove(id: string): Promise<User> {
+    return this.prisma.user.delete({ where: { id } });
+  }
 }

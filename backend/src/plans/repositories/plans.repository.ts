@@ -88,7 +88,10 @@ export class PlansRepository {
   async update(id: string, data: UpdatePlanDto) {
     return this.prisma.plan.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        ...(data.features ? { features: data.features as any } : {}),
+      } as any,
     });
   }
 

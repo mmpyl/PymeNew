@@ -38,6 +38,24 @@ export class SubscriptionsService {
     return subscription;
   }
 
+  findAll() { return this.subscriptionsRepository.findAll(); }
+
+  async findOne(id: string) {
+    const subscription = await this.subscriptionsRepository.findById(id);
+    if (!subscription) throw new NotFoundException('Suscripción no encontrada');
+    return subscription;
+  }
+
+  async update(id: string, data: any) {
+    await this.findOne(id);
+    return this.subscriptionsRepository.update(id, data);
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    return this.subscriptionsRepository.remove(id);
+  }
+
   async renew(tenantId: string) {
     const subscription = await this.findByTenant(tenantId);
     return this.subscriptionsRepository.renew(subscription.id);

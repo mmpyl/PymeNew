@@ -18,3 +18,23 @@ export class CreateUserDto {
   @IsObject()
   datosAdicionales?: Record<string, unknown>;
 }
+
+export class UpdateUserDto {
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(Role, { each: true })
+  roles?: Role[];
+
+  @IsOptional()
+  @IsObject()
+  datosAdicionales?: Record<string, unknown>;
+}
