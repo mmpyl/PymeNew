@@ -6,6 +6,15 @@
 
 # Dependencies
 node_modules/
+
+# Build output and generated files
+.next/
+.nuxt/
+.turbo/
+*.tsbuildinfo
+out/
+tmp/
+temp/
 venv/
 .venv/
 __pycache__/
@@ -18,6 +27,11 @@ target/
 
 # Logs and temp files
 *.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 *.tmp
 *.swp
 
