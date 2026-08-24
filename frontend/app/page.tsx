@@ -6,8 +6,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="w-full py-6 px-8 bg-white/80 backdrop-blur-sm border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-20 w-full border-b border-slate-200 bg-white/85 px-4 py-4 shadow-sm backdrop-blur-sm sm:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -18,60 +18,60 @@ export default function HomePage() {
               PymeN
             </h1>
           </div>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-2 sm:gap-4" aria-label="Navegación principal">
             <Link 
               href="/login" 
-              className="px-5 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600 sm:px-5"
             >
               Iniciar sesión
             </Link>
             <Link 
-              href="/dashboard" 
-              className="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
+              href="/register" 
+              className="px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
             >
-              Dashboard
+              Crear cuenta
             </Link>
           </nav>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="max-w-4xl mx-auto text-center">
+      <main className="relative flex-1 overflow-hidden px-4 py-16 sm:py-24">
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent_55%)]" aria-hidden="true" />
+        <div className="mx-auto max-w-4xl text-center">
           <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-            <span className="text-sm font-medium text-blue-700">Enterprise Ready</span>
+            <span className="text-sm font-medium text-blue-700">Listo para empresas en crecimiento</span>
           </div>
           
-          <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-            Base Enterprise<br />
+          <h2 className="mb-6 text-4xl font-bold leading-tight text-slate-900 sm:text-5xl md:text-6xl">
+            Gestiona tu PyME<br />
             <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              Modular & Escalable
+              con una base escalable
             </span>
           </h2>
           
           <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Boilerplate profesional con NestJS, Next.js 14, PostgreSQL JSONB y Prisma. 
-            Diseñado para acelerar el desarrollo de aplicaciones empresariales modernas.
+            Frontend y backend listos para autenticar usuarios, organizar módulos y acelerar el desarrollo de productos empresariales con Next.js, NestJS, PostgreSQL JSONB y Prisma.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link 
-              href="/dashboard" 
+              href="/register" 
               className="w-full sm:w-auto px-8 py-4 text-base font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
-              Ir al Dashboard
+              Crear cuenta gratis
             </Link>
             <Link 
               href="/login" 
               className="w-full sm:w-auto px-8 py-4 text-base font-semibold text-slate-700 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all"
             >
-              Comenzar Ahora
+              Iniciar sesión
             </Link>
           </div>
 
           {/* Features */}
-          <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
             <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4 mx-auto">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +106,7 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-6 px-8 bg-white/80 backdrop-blur-sm border-t border-slate-200">
+      <footer className="w-full border-t border-slate-200 bg-white/80 px-4 py-6 backdrop-blur-sm sm:px-8">
         <div className="max-w-7xl mx-auto text-center text-slate-500 text-sm">
           <p>&copy; {new Date().getFullYear()} PymeN Boilerplate. Todos los derechos reservados.</p>
         </div>
