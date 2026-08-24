@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "./generated-tailwind.css";
 
 :root {
   --background: #f8fafc;
@@ -44,4 +44,9 @@ button {
 
 input {
   font: inherit;
+}
+
+svg {
+  display: block;
+  flex-shrink: 0;
 }

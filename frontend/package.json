@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "generate:styles": "node scripts/generate-tailwind.mjs",
+    "predev": "npm run generate:styles",
     "dev": "next dev",
+    "prebuild": "npm run generate:styles",
     "build": "next build",
     "lint": "next lint"
   },
