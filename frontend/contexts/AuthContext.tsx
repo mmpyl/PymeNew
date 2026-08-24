@@ -10,6 +10,7 @@ type AuthContextValue = {
   token: string | null;
   user: AuthUser | null;
   isAuthenticated: boolean;
+  isAuthLoading: boolean;
   login: (credentials: Credentials) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
@@ -18,17 +19,42 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const STORAGE_KEY = 'pymen.auth';
 
+function readStoredSession(): AuthResponse | null {
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+
+  if (!stored) {
+    return null;
+  }
+
+  try {
+    const session = JSON.parse(stored) as Partial<AuthResponse>;
+
+    if (!session.accessToken || !session.user?.email) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+
+    return session as AuthResponse;
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const session = JSON.parse(stored) as AuthResponse;
+    const session = readStoredSession();
+
+    if (session) {
       setToken(session.accessToken);
       setUser(session.user);
     }
+
+    setIsAuthLoading(false);
   }, []);
 
   const persistSession = (session: AuthResponse) => {
@@ -41,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token,
     user,
     isAuthenticated: Boolean(token),
+    isAuthLoading,
     login: async (credentials) => {
       const session = await apiFetch<AuthResponse>('/auth/login', {
         method: 'POST',
@@ -60,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       window.localStorage.removeItem(STORAGE_KEY);
     },
-  }), [token, user]);
+  }), [isAuthLoading, token, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
