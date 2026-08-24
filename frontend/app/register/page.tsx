@@ -5,24 +5,36 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function LoginPage() {
-  const { login } = useAuth();
+export default function RegisterPage() {
+  const { register } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    setIsLoading(true);
     
     try {
-      await login({ email, password });
+      await register({ email, password });
       router.push('/dashboard');
     } catch (err) {
-      setError('Credenciales inválidas. Intente nuevamente.');
+      setError('Error al registrar. Intente nuevamente.');
     } finally {
       setIsLoading(false);
     }
@@ -43,12 +55,12 @@ export default function LoginPage() {
               PymeN
             </span>
           </Link>
-          <p className="text-slate-600">Inicia sesión para continuar</p>
+          <p className="text-slate-600">Crea tu cuenta gratuita</p>
         </div>
 
-        {/* Login Card */}
+        {/* Register Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-          <h1 className="text-2xl font-bold text-slate-900 mb-6 text-center">Bienvenido</h1>
+          <h1 className="text-2xl font-bold text-slate-900 mb-6 text-center">Crear Cuenta</h1>
           
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
@@ -90,6 +102,21 @@ export default function LoginPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                Confirmar contraseña
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="••••••••"
+                required
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-900 placeholder-slate-400"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}
@@ -101,19 +128,19 @@ export default function LoginPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Iniciando sesión...
+                  Creando cuenta...
                 </>
               ) : (
-                'Entrar'
+                'Registrarse'
               )}
             </button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-slate-200">
             <p className="text-center text-sm text-slate-600">
-              ¿No tienes cuenta?{' '}
-              <Link href="/register" className="font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                Regístrate aquí
+              ¿Ya tienes cuenta?{' '}
+              <Link href="/login" className="font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                Inicia sesión aquí
               </Link>
             </p>
           </div>
