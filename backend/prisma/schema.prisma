@@ -10,6 +10,39 @@ datasource db {
 enum Role {
   ADMIN
   USER
+  TENANT_ADMIN
+  TENANT_USER
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  TRIAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PENDING
+  CANCELLED
+  EXPIRED
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  LIFETIME
+}
+
+enum ModuleType {
+  BOTICA
+  FERRETERIA
+  BODEGA
+  RESTAURANTE
+  PELUQUERIA
+  GIMNASIO
+  CUSTOM
 }
 
 model User {
@@ -21,5 +54,164 @@ model User {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  // Relación con tenants (un usuario puede pertenecer a múltiples tenants)
+  tenantMemberships TenantMember[]
+  ownedTenants      Tenant[] @relation("TenantOwner")
+
   @@map("users")
+}
+
+// Modelo principal para Multi-Tenancy
+model Tenant {
+  id                String        @id @default(uuid())
+  name              String
+  slug              String        @unique // identificador único para subdominio o URL
+  description       String?
+  moduleType        ModuleType    @default(CUSTOM)
+  status            TenantStatus  @default(TRIAL)
+  logo              String?
+  config            Json          @default("{}") // Configuración específica del tenant
+  
+  // Datos de contacto
+  email             String?
+  phone             String?
+  address           String?
+  
+  // Fechas importantes
+  trialEndsAt       DateTime?
+  expiresAt         DateTime?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relaciones
+  owner             User?         @relation("TenantOwner", fields: [ownerId], references: [id])
+  ownerId           String?
+  
+  members           TenantMember[]
+  subscription      Subscription?
+  modules           TenantModule[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+// Miembros del tenant (usuarios que pertenecen a un tenant)
+model TenantMember {
+  id            String    @id @default(uuid())
+  role          Role      @default(TENANT_USER)
+  invitedAt     DateTime  @default(now())
+  acceptedAt    DateTime?
+  isActive      Boolean   @default(true)
+  
+  user          User      @relation(fields: [userId], references: [id])
+  userId        String
+  
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  tenantId      String
+
+  @@unique([userId, tenantId])
+  @@map("tenant_members")
+}
+
+// Suscripción y membresía del tenant
+model Subscription {
+  id                String          @id @default(uuid())
+  planName          String          // Ej: "Básico", "Profesional", "Enterprise"
+  billingCycle      BillingCycle
+  price             Decimal         @db.Decimal(10, 2)
+  currency          String          @default("USD")
+  status            SubscriptionStatus @default(PENDING)
+  
+  // Fechas
+  startDate         DateTime        @default(now())
+  endDate           DateTime
+  cancelledAt       DateTime?
+  trialDays         Int             @default(15)
+  
+  // Características del plan
+  maxUsers          Int             @default(5)
+  maxStorage        Int             @default(1000) // MB
+  features          Json            @default("[]")
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relación uno a uno con Tenant
+  tenant            Tenant          @relation(fields: [tenantId], references: [id])
+  tenantId          String          @unique
+  
+  payments          Payment[]
+
+  @@map("subscriptions")
+}
+
+// Módulos activados para cada tenant (permite personalizar por tipo de negocio)
+model TenantModule {
+  id            String      @id @default(uuid())
+  name          String
+  type          ModuleType
+  isEnabled     Boolean     @default(true)
+  config        Json        @default("{}") // Configuración específica del módulo
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  tenant        Tenant      @relation(fields: [tenantId], references: [id])
+  tenantId      String
+
+  @@unique([tenantId, type])
+  @@map("tenant_modules")
+}
+
+// Historial de pagos
+model Payment {
+  id              String    @id @default(uuid())
+  amount          Decimal   @db.Decimal(10, 2)
+  currency        String    @default("USD")
+  status          String    // PENDING, COMPLETED, FAILED, REFUNDED
+  paymentMethod   String?   // CARD, TRANSFER, CASH
+  transactionId   String?   // ID de pasarela de pago
+  metadata        Json      @default("{}")
+  
+  createdAt       DateTime  @default(now())
+  paidAt          DateTime?
+
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId  String
+  
+  plan            Plan?     @relation(fields: [planId], references: [id])
+  planId          String?
+
+  @@map("payments")
+}
+
+// Modelo para los planes de suscripción disponibles
+model Plan {
+  id            String        @id @default(uuid())
+  name          String
+  description   String?
+  billingCycle  BillingCycle
+  price         Decimal       @db.Decimal(10, 2)
+  currency      String        @default("USD")
+  trialDays     Int           @default(15)
+  
+  // Límites del plan
+  maxUsers      Int           @default(5)
+  maxStorage    Int           @default(1000) // MB
+  
+  // Características del plan
+  features      Json          @default("[]")
+  
+  // Metadatos
+  isPopular     Boolean       @default(false)
+  sortOrder     Int           @default(0)
+  isActive      Boolean       @default(true)
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  payments      Payment[]
+
+  @@map("plans")
 }
