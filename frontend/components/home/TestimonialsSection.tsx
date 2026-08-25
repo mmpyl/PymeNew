@@ -48,7 +48,7 @@ export default function TestimonialsSection() {
                   </svg>
                 ))}
               </div>
-              <p className="text-slate-700 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
+              <p className="text-slate-700 mb-6 leading-relaxed italic">&ldquo;{testimonial.quote}&rdquo;</p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-semibold">
                   {testimonial.avatar}

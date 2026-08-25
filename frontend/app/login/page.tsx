@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { AuthLayout, EmailInput, PasswordInput, SocialLoginButton, ForgotPasswordModal } from '@/components/auth';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -12,14 +13,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
-    
+
     try {
       await login({ email, password });
+      
+      // Persist session if "remember me" is checked
+      if (rememberMe) {
+        localStorage.setItem('pymen.remember', 'true');
+      }
+      
       router.push('/dashboard');
     } catch (err) {
       setError('Credenciales inválidas. Intente nuevamente.');
@@ -28,11 +37,25 @@ export default function LoginPage() {
     }
   };
 
+  const handleSocialLogin = async (provider: string) => {
+    console.log(`Login with ${provider}`);
+    // TODO: Implement social login
+  };
+
+  const handleForgotPassword = async (email: string) => {
+    // TODO: Implement forgot password API call
+    console.log('Reset password for:', email);
+    return Promise.resolve();
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
+    <>
+      <AuthLayout
+        title="¡Bienvenido de nuevo!"
+        subtitle="Inicia sesión para gestionar tu negocio"
+      >
+        {/* Logo Mobile */}
+        <div className="text-center mb-8 lg:hidden">
           <Link href="/" className="inline-flex items-center gap-3 mb-2">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,13 +66,13 @@ export default function LoginPage() {
               PymeN
             </span>
           </Link>
-          <p className="text-slate-600">Inicia sesión para continuar</p>
         </div>
 
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-          <h1 className="text-2xl font-bold text-slate-900 mb-6 text-center">Bienvenido</h1>
-          
+          <h1 className="text-2xl font-bold text-slate-900 mb-2 text-center">Iniciar Sesión</h1>
+          <p className="text-slate-600 text-center mb-6">Ingresa tus credenciales para continuar</p>
+
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
               <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,34 +83,41 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-                Correo electrónico
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="nombre@empresa.com"
-                required
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-900 placeholder-slate-400"
-              />
-            </div>
+            <EmailInput
+              id="email"
+              label="Correo electrónico"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="nombre@empresa.com"
+              required
+            />
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-                Contraseña
+            <PasswordInput
+              id="password"
+              label="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-slate-600">Recordarme</span>
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-900 placeholder-slate-400"
-              />
+              <button
+                type="button"
+                onClick={() => setIsForgotPasswordOpen(true)}
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
             </div>
 
             <button
@@ -109,6 +139,25 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-slate-500">o continúa con</span>
+            </div>
+          </div>
+
+          {/* Social Login */}
+          <div className="space-y-3">
+            <SocialLoginButton
+              provider="google"
+              onClick={() => handleSocialLogin('google')}
+              disabled={isLoading}
+            />
+          </div>
+
           <div className="mt-6 pt-6 border-t border-slate-200">
             <p className="text-center text-sm text-slate-600">
               ¿No tienes cuenta?{' '}
@@ -128,7 +177,14 @@ export default function LoginPage() {
             Volver al inicio
           </Link>
         </div>
-      </div>
-    </div>
+      </AuthLayout>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        onSendEmail={handleForgotPassword}
+      />
+    </>
   );
 }
