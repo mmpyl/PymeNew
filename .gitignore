@@ -1,52 +1,57 @@
 ```
-# Environment variables
-.env
-.env.local
-.env.*
-
 # Dependencies
 node_modules/
 
-# Build output and generated files
-.next/
-.nuxt/
-.turbo/
-*.tsbuildinfo
-out/
-tmp/
-temp/
-venv/
-.venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
+# Build outputs
 dist/
 build/
-target/
-.gradle/
+.next/
+out/
 
-# Logs and temp files
+# Logs
 *.log
-*.log.*
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-*.tmp
-*.swp
 
-# Editors
+# Environment variables
+.env
+.env.local
+*.env.*
+
+# IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# System files
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+
+# Temporary files
+*.tmp
+*.temp
+*~
 .DS_Store
 Thumbs.db
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
 
 # Compressed files
 *.zip
@@ -67,4 +72,8 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```
