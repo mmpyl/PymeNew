@@ -2,10 +2,19 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { TenantsRepository } from './repositories/tenants.repository';
 import { CreateTenantDto, UpdateTenantDto } from './dto';
 import { JwtPayload } from '../auth/jwt-payload.type';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { SubscriptionStatus } from '@prisma/client';
 
 @Injectable()
 export class TenantsService {
-  constructor(private tenantsRepository: TenantsRepository) {}
+  constructor(
+    private tenantsRepository: TenantsRepository,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+    private subscriptionsService: SubscriptionsService,
+  ) {}
 
   async create(createTenantDto: CreateTenantDto, user: JwtPayload) {
     // Verificar si el slug ya existe
@@ -78,10 +87,42 @@ export class TenantsService {
       throw new NotFoundException('No tienes acceso a este tenant');
     }
 
+    // Obtener información de suscripción
+    let subscriptionStatus: SubscriptionStatus | undefined;
+    try {
+      const subscriptionInfo = await this.subscriptionsService.checkStatus(tenantId);
+      subscriptionStatus = subscriptionInfo.status as SubscriptionStatus;
+    } catch (e) {
+      // Si no hay suscripción, dejar undefined o usar un valor por defecto
+      subscriptionStatus = undefined;
+    }
+
+    // Obtener el módulo principal del tenant
+    const moduleType = tenant.modules?.[0]?.type || 'CUSTOM';
+
+    // Crear payload para el nuevo JWT
+    const payload: JwtPayload = {
+      sub: user.sub,
+      email: user.email,
+      roles: user.roles,
+      tenantId,
+      tenantSlug: tenant.slug,
+      moduleType,
+      subscriptionStatus,
+    };
+
+    // Firmar nuevo token JWT
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '1h'),
+    });
+
     return {
+      accessToken,
       tenantId,
       tenantSlug: tenant.slug,
       tenantName: tenant.name,
+      moduleType,
+      subscriptionStatus,
     };
   }
 }
