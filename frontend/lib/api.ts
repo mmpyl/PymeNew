@@ -31,3 +31,12 @@ export type AuthResponse = {
   accessToken: string;
   user: AuthUser;
 };
+
+export type TenantSwitchResponse = {
+  accessToken: string;
+  tenantId: string;
+  tenantSlug: string;
+  tenantName: string;
+  moduleType?: string;
+  subscriptionStatus?: string;
+};

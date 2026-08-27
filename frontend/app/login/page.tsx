@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthLayout, EmailInput, PasswordInput, SocialLoginButton, ForgotPasswordModal } from '@/components/auth';
+import { apiFetch } from '@/lib/api';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, switchTenant } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +28,24 @@ export default function LoginPage() {
       // Persist session if "remember me" is checked
       if (rememberMe) {
         localStorage.setItem('pymen.remember', 'true');
+      }
+      
+      // After login, check if user has only one tenant and auto-switch
+      // This prevents sessions without tenant context
+      try {
+        const tenants = await apiFetch<any[]>('/tenants/my-tenants', {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (tenants && tenants.length === 1) {
+          // User has only one tenant, force switch to it
+          await switchTenant(tenants[0].id);
+        }
+      } catch (tenantError) {
+        // If fetching tenants fails, continue to dashboard anyway
+        console.warn('Could not fetch tenants for auto-switch:', tenantError);
       }
       
       router.push('/dashboard');

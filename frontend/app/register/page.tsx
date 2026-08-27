@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthLayout, EmailInput, PasswordInput, PasswordStrengthMeter, SocialLoginButton } from '@/components/auth';
+import { apiFetch } from '@/lib/api';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, switchTenant } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,6 +51,25 @@ export default function RegisterPage() {
 
     try {
       await register({ email, password });
+      
+      // After registration, check if user has only one tenant and auto-switch
+      // This prevents sessions without tenant context
+      try {
+        const tenants = await apiFetch<any[]>('/tenants/my-tenants', {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (tenants && tenants.length === 1) {
+          // User has only one tenant, force switch to it
+          await switchTenant(tenants[0].id);
+        }
+      } catch (tenantError) {
+        // If fetching tenants fails, continue to dashboard anyway
+        console.warn('Could not fetch tenants for auto-switch:', tenantError);
+      }
+      
       router.push('/dashboard');
     } catch (err) {
       setError('Error al registrar. Intente nuevamente.');

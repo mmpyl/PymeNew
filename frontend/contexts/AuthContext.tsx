@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { apiFetch, AuthResponse, AuthUser } from '@/lib/api';
+import { apiFetch, AuthResponse, AuthUser, TenantSwitchResponse } from '@/lib/api';
 
 type Credentials = { email: string; password: string };
 type RegisterPayload = Credentials & { datosAdicionales?: Record<string, unknown> };
@@ -14,6 +14,7 @@ type AuthContextValue = {
   login: (credentials: Credentials) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
+  switchTenant: (tenantId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -81,6 +82,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(payload),
       });
       persistSession(session);
+    },
+    switchTenant: async (tenantId: string) => {
+      const response = await apiFetch<TenantSwitchResponse>(`/tenants/${tenantId}/switch`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      // Actualizar solo el token, el usuario permanece igual
+      setToken(response.accessToken);
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        accessToken: response.accessToken,
+        user,
+      }));
     },
     logout: () => {
       setToken(null);
