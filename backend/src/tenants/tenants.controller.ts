@@ -89,4 +89,9 @@ export class TenantsController {
   switchTenant(@Param('id') id: string, @Request() req: any) {
     return this.tenantsService.switchTenant(id, req.user);
   }
+
+  @Get(':id/status')
+  getStatus(@Param('id') id: string) {
+    return this.tenantsService.getStatus(id);
+  }
 }
