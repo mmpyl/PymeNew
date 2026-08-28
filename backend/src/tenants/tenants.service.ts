@@ -125,4 +125,33 @@ export class TenantsService {
       subscriptionStatus,
     };
   }
+
+  async getStatus(tenantId: string) {
+    const tenant = await this.findOne(tenantId);
+    
+    // Obtener información de suscripción
+    let subscriptionInfo;
+    try {
+      subscriptionInfo = await this.subscriptionsService.checkStatus(tenantId);
+    } catch (e) {
+      subscriptionInfo = {
+        isActive: false,
+        status: 'NO_SUBSCRIPTION',
+        expiresAt: null,
+      };
+    }
+
+    // Obtener el módulo principal del tenant
+    const moduleType = tenant.modules?.[0]?.type || 'CUSTOM';
+
+    return {
+      tenantId,
+      tenantSlug: tenant.slug,
+      tenantName: tenant.name,
+      isActive: subscriptionInfo.isActive,
+      status: subscriptionInfo.status,
+      expiresAt: subscriptionInfo.expiresAt,
+      moduleType,
+    };
+  }
 }
